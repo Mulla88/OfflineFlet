@@ -6,7 +6,7 @@ def mafia_game(page: ft.Page, go_home):
 
     state = {
         "log": [],
-        "page": "setup",
+        "page": "rules",  # Start from rules
         "players": [],
         "roles": {},
         "num_players": 5,
@@ -34,13 +34,50 @@ def mafia_game(page: ft.Page, go_home):
         citizens_alive = sum(1 for p in state["players"] if state["roles"][p] != 'مافيا' and p not in state["eliminated_players"])
         return mafia_alive == 0 or mafia_alive >= citizens_alive
 
+    def switch_page(name):
+        state["page"] = name
+        update_ui()
+
+    def save_and_continue(key, value, next_step):
+        if value:
+            state["night_results"][key] = value
+        state["night_step"] = next_step
+        state["page"] = "night_phase_intro"
+        update_ui()
+
+    def to_input_players():
+        state["page"] = "input_players"
+        update_ui()
+
+    def continue_to_night():
+        state["night_step"] = "مافيا"
+        state["night_counter"] += 1
+        state["night_results"] = {}
+        switch_page("night_phase_intro")
+
     def update_ui():
         page.views.clear()
         view = ft.View("/mafia", controls=[], scroll=ft.ScrollMode.AUTO)
         page.views.append(view)
 
-        if state["page"] == "setup":
-            view.controls.append(ft.Text("🎭 إعداد لعبة المافيا", size=28))
+        if state["page"] == "rules":
+            view.controls.append(ft.Text("📜 قوانين لعبة المافيا", size=28, weight="bold"))
+            view.controls.append(ft.Text("🎯 الهدف:", size=22, weight="bold"))
+            view.controls.append(ft.Text("إذا كنت مدنيًا، هدفك اكتشاف المافيا وطردهم. أما إذا كنت مافيا، فعليك القضاء على جميع المدنيين.", size=18))
+            view.controls.append(ft.Text("👥 عدد اللاعبين: من 5 إلى 15", size=18))
+            view.controls.append(ft.Text("🧠 الأدوار:", size=22, weight="bold"))
+            view.controls.append(ft.Text("- مافيا: تقتل أحد اللاعبين ليلاً\n- طبيب: ينقذ لاعبًا كل ليلة (لا يمكن إنقاذ نفس الشخص مرتين متتاليتين)\n- محقق: يحقق في هوية أحد اللاعبين\n- مواطن: يحاول كشف المافيا", size=18))
+            view.controls.append(ft.Text("🕹 طريقة اللعب:", size=22, weight="bold"))
+            view.controls.append(ft.Text("اللعبة تتناوب بين مرحلتين:\n- الليل: تؤدي الأدوار الخاصة مهامها\n- النهار: يتناقش الجميع ويصوتون لطرد مشبوه", size=18))
+            view.controls.append(ft.Text("🏁 نهاية اللعبة:", size=22, weight="bold"))
+            view.controls.append(ft.Text("- يفوز المدنيون إذا تم طرد كل المافيا\n- تفوز المافيا إذا تساوى عددهم أو زاد على المدنيين", size=18))
+            view.controls.append(ft.Row([
+                ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: switch_page("setup")),
+                ft.ElevatedButton("🔙 العودة للقائمة", on_click=go_home)
+            ], alignment="center"))
+
+        elif state["page"] == "setup":
+            view.controls.append(ft.Text("🎭 إعداد عدد اللاعبين", size=28))
             num_display = ft.Text(f"عدد اللاعبين: {state['num_players']}", size=20)
 
             def update_num(change):
@@ -54,7 +91,7 @@ def mafia_game(page: ft.Page, go_home):
                     ft.IconButton(ft.Icons.ADD, on_click=lambda e: update_num(1)),
                 ]),
                 ft.ElevatedButton("التالي", on_click=lambda e: to_input_players()),
-                ft.ElevatedButton("🔙 رجوع للقائمة الرئيسية", on_click=go_home)
+                ft.ElevatedButton("🔙 رجوع للقائمة", on_click=go_home)
             ]
 
         elif state["page"] == "input_players":

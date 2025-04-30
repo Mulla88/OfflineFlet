@@ -2,7 +2,7 @@ import flet as ft
 import random
 import threading
 import time
-from taboo_words import WORD_BANK  # Make sure this file exists and is correct
+from taboo_words import WORD_BANK
 
 def taboo_game(page: ft.Page, go_home):
     state = {
@@ -14,7 +14,8 @@ def taboo_game(page: ft.Page, go_home):
         "current_word": None,
         "team_inputs": [],
         "game_started": False,
-        "round": 1
+        "round": 1,
+        "step": "rules"
     }
 
     team_name_fields = []
@@ -54,7 +55,7 @@ def taboo_game(page: ft.Page, go_home):
         team = state["teams"][state["current_team_index"]]
         round_words = [log for log in state["word_log"] if log["team"] == team and log["round"] == state["round"]]
 
-        scrollable_summary = ft.Column(
+        summary = ft.Column(
             controls=[
                 ft.Text(f"⏰ انتهى الوقت! الفريق: {team}", size=24, weight="bold", color="red"),
                 ft.Text("🔤 الكلمات التي ظهرت:", size=20)
@@ -74,10 +75,9 @@ def taboo_game(page: ft.Page, go_home):
             start_round()
 
         page.views[-1].controls.clear()
-        page.views[-1].controls.append(scrollable_summary)
+        page.views[-1].controls.append(summary)
         page.views[-1].controls.append(ft.ElevatedButton("▶ الفريق التالي", on_click=next_team))
         page.update()
-
 
     def start_timer():
         def run():
@@ -88,7 +88,6 @@ def taboo_game(page: ft.Page, go_home):
             timer_text.value = "انتهى الوقت!"
             page.update()
             end_round()
-
         threading.Thread(target=run, daemon=True).start()
 
     def start_round():
@@ -106,7 +105,6 @@ def taboo_game(page: ft.Page, go_home):
         view.controls.clear()
         current_team = state["teams"][state["current_team_index"]]
 
-        # Last round warning
         if state["round"] == 3:
             last_round_warning.value = "⚠️ هذا هو الدور الأخير!"
             last_round_warning.visible = True
@@ -146,7 +144,7 @@ def taboo_game(page: ft.Page, go_home):
 
     def handle_skip(e):
         team = state["teams"][state["current_team_index"]]
-        state["scores"][team] -= 0.5  # Deduct points
+        state["scores"][team] -= 0.5
         state["word_log"].append({"team": team, "word": state["current_word"]["secret"], "correct": False, "round": state["round"]})
         state["current_word"] = get_new_word()
         update_word_display()
@@ -175,27 +173,50 @@ def taboo_game(page: ft.Page, go_home):
             "current_word": None,
             "team_inputs": [],
             "game_started": False,
-            "round": 1
+            "round": 1,
+            "step": "rules"
         })
         build_ui()
 
     def build_ui():
-        view = page.views[-1]
-        view.controls.clear()
+        page.views.clear()
+        view = ft.View(route="/taboo", controls=[], scroll=ft.ScrollMode.AUTO)
+        page.views.append(view)
 
-        if not state["game_started"]:
-            view.controls.append(ft.Text("🎯 لعبة تابو", size=32, weight="bold"))
-            view.controls.append(ft.Text("👥 أدخل أسماء الفرق:", size=22))
-            team_name_fields.clear()
-            for i in range(2):
-                tf = ft.TextField(label=f"اسم الفريق {i+1}", width=300)
-                team_name_fields.append(tf)
-                view.controls.append(tf)
-
-            view.controls.append(ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=start_game))
-            view.controls.append(ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=go_home))
+        if state["step"] == "rules":
+            view.controls += [
+                ft.Text("📜 قوانين لعبة تابو", size=28, weight="bold"),
+                ft.Text("👥 عدد الفرق: فريقان ", size=20),
+                ft.Text("🎯 فكرة اللعبة:", size=22, weight="bold"),
+                ft.Text("يصف أحد أعضاء الفريق الكلمة السرية بدون استخدام الكلمات الممنوعة.", size=18),
+                ft.Text("🕹 كيفية اللعب:", size=22, weight="bold"),
+                ft.Text("كل فريق يلعب لمدة 60 ثانية في الجولة.", size=18),
+                ft.Text("كل كلمة ممنوعة أو تخطي = -0.5 نقطة", size=18),
+                ft.Text("كل إجابة صحيحة = +1 نقطة", size=18),
+                ft.Text("🏁 النتيجة:", size=22, weight="bold"),
+                ft.Text("اللعبة تتكون من 3 جولات لكل فريق. الفريق ذو أعلى نقاط يفوز.", size=18),
+                ft.Row([
+                    ft.ElevatedButton("🚀 ابدأ", on_click=lambda e: begin_input()),
+                    ft.ElevatedButton("🔙 العودة", on_click=go_home)
+                ], alignment="center")
+            ]
+        else:
+            if not state["game_started"]:
+                view.controls.append(ft.Text("🎯 لعبة تابو", size=32, weight="bold"))
+                view.controls.append(ft.Text("👥 أدخل أسماء الفرق:", size=22))
+                team_name_fields.clear()
+                for i in range(2):
+                    tf = ft.TextField(label=f"اسم الفريق {i+1}", width=300)
+                    team_name_fields.append(tf)
+                    view.controls.append(tf)
+                view.controls.append(ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=start_game))
+                view.controls.append(ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=go_home))
 
         page.update()
+
+    def begin_input():
+        state["step"] = "input_teams"
+        build_ui()
 
     correct_btn.on_click = handle_correct
     skip_btn.on_click = handle_skip

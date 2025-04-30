@@ -6,15 +6,8 @@ categories = {
     "The Office": "trivia_data.trivia_the_office",
     "الرياضة": "trivia_data.trivia_sports",
     "الجغرافيا": "trivia_data.trivia_geography",
-    "الأفلام": "trivia_data.trivia_movies",
     "الموسيقى": "trivia_data.trivia_music",
-    "ثقافة عامة": "trivia_data.trivia_general_knowledge",
-    "تكنولوجيا": "trivia_data.trivia_technology",
-    "تاريخ": "trivia_data.trivia_history",
-    "رمضان": "trivia_data.trivia_ramadan",
-    "ألعاب فيديو": "trivia_data.trivia_video_games",
-    "أنمي": "trivia_data.trivia_anime",
-    "كرتون": "trivia_data.trivia_cartoons"
+    "ثقافة عامة": "trivia_data.trivia_general_knowledge"
 }
 
 def load_questions(module_path):
@@ -28,7 +21,7 @@ def trivia_battle_game(page: ft.Page, go_home):
     page.scroll = True
 
     state = {
-        "step": "choose_team_count",
+        "step": "rules",  # <-- default start with rules screen
         "team_count": 2,
         "team_inputs": [],
         "teams": [],
@@ -48,7 +41,21 @@ def trivia_battle_game(page: ft.Page, go_home):
         view = ft.View(route="/trivia_battle", controls=[], scroll=ft.ScrollMode.AUTO)
         page.views.append(view)
 
-        if state["step"] == "choose_team_count":
+        if state["step"] == "rules":
+            view.controls.append(ft.Text("📜 قوانين لعبة تريفيا باتل", size=28, weight="bold"))
+            view.controls.append(ft.Text("👥 عدد الفرق: من 2 إلى 6", size=20))
+            view.controls.append(ft.Text("🎯 فكرة اللعبة:", size=22, weight="bold"))
+            view.controls.append(ft.Text("مسابقة معلومات بين فرق متعددة. كل فريق يتناوب بالإجابة على الأسئلة.", size=18))
+            view.controls.append(ft.Text("🕹 كيفية اللعب:", size=22, weight="bold"))
+            view.controls.append(ft.Text("كل فريق يجيب على 10 أسئلة. كل إجابة صحيحة تُحسب بنقطة واحدة.", size=18))
+            view.controls.append(ft.Text("🏁 النتيجة:", size=22, weight="bold"))
+            view.controls.append(ft.Text("الفريق الذي يجمع أكبر عدد من النقاط هو الفائز.", size=18))
+            view.controls.append(ft.Row([
+                ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: go_to_team_count()),
+                ft.ElevatedButton("🔙 العودة للقائمة", on_click=go_home)
+            ], alignment="center"))
+
+        elif state["step"] == "choose_team_count":
             view.controls.append(ft.Text("👥 كم عدد الفرق؟", size=24))
             view.controls.append(
                 ft.Row([
@@ -135,8 +142,10 @@ def trivia_battle_game(page: ft.Page, go_home):
             for t in state["teams"]:
                 view.controls.append(ft.Text(f"- {t}: {state['scores'][t]} نقطة"))
 
-            view.controls.append(ft.ElevatedButton("🔁 العب مرة أخرى", on_click=lambda e: restart_game()))
-            view.controls.append(ft.ElevatedButton("🔙 رجوع للقائمة الرئيسية", on_click=go_home))
+            view.controls.append(ft.Row([
+                ft.ElevatedButton("🔁 العب مرة أخرى", on_click=lambda e: restart_game()),
+                ft.ElevatedButton("🏠 العودة للقائمة الرئيسية", on_click=go_home)
+            ], alignment="center"))
 
         page.update()
 
@@ -175,7 +184,7 @@ def trivia_battle_game(page: ft.Page, go_home):
     def restart_game():
         state.clear()
         state.update({
-            "step": "choose_team_count",
+            "step": "rules",
             "team_count": 2,
             "team_inputs": [],
             "teams": [],
