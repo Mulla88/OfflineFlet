@@ -15,7 +15,8 @@ def taboo_game(page: ft.Page, go_home):
         "team_inputs": [],
         "game_started": False,
         "round": 1,
-        "step": "rules"
+        "step": "rules",
+        "stop_timer_event": threading.Event()
     }
 
     team_name_fields = []
@@ -23,6 +24,7 @@ def taboo_game(page: ft.Page, go_home):
     score_display = ft.Column(visible=False)
     correct_btn = ft.ElevatedButton("✅ إجابة صحيحة", visible=False)
     skip_btn = ft.ElevatedButton("⏭ تخطي / ممنوعة", visible=False)
+    end_round_btn = ft.ElevatedButton("⏹ إنهاء الجولة", visible=False)
     timer_text = ft.Text(size=30, weight="bold")
     last_round_warning = ft.Text("", size=20, color="red", visible=False)
 
@@ -46,9 +48,11 @@ def taboo_game(page: ft.Page, go_home):
     def update_score_display():
         score_display.controls = [ft.Text(f"{team}: {score}", size=20) for team, score in state["scores"].items()]
 
-    def end_round():
+    def end_round(e=None):
+        state["stop_timer_event"].set()
         correct_btn.visible = False
         skip_btn.visible = False
+        end_round_btn.visible = False
         word_display.visible = False
         last_round_warning.visible = False
 
@@ -80,14 +84,20 @@ def taboo_game(page: ft.Page, go_home):
         page.update()
 
     def start_timer():
+        state["stop_timer_event"].clear()
+
         def run():
             for i in range(60, 0, -1):
+                if state["stop_timer_event"].is_set():
+                    return
                 timer_text.value = f"⏳ الوقت المتبقي: {i} ثانية"
                 page.update()
                 time.sleep(1)
-            timer_text.value = "انتهى الوقت!"
-            page.update()
-            end_round()
+            if not state["stop_timer_event"].is_set():
+                timer_text.value = "انتهى الوقت!"
+                page.update()
+                end_round()
+
         threading.Thread(target=run, daemon=True).start()
 
     def start_round():
@@ -118,6 +128,7 @@ def taboo_game(page: ft.Page, go_home):
         word_display.visible = True
         correct_btn.visible = True
         skip_btn.visible = True
+        end_round_btn.visible = True
         score_display.visible = True
 
         view.controls += [
@@ -125,7 +136,10 @@ def taboo_game(page: ft.Page, go_home):
             last_round_warning,
             timer_text,
             word_display,
-            ft.Row([correct_btn, skip_btn], alignment="center"),
+            ft.Column([
+                ft.Row([correct_btn, skip_btn], alignment="center"),
+                ft.Row([end_round_btn], alignment="center")
+            ], alignment="center"),
             ft.Text("📊 النقاط:", size=20),
             score_display,
             ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=go_home)
@@ -174,7 +188,8 @@ def taboo_game(page: ft.Page, go_home):
             "team_inputs": [],
             "game_started": False,
             "round": 1,
-            "step": "rules"
+            "step": "rules",
+            "stop_timer_event": threading.Event()
         })
         build_ui()
 
@@ -220,5 +235,6 @@ def taboo_game(page: ft.Page, go_home):
 
     correct_btn.on_click = handle_correct
     skip_btn.on_click = handle_skip
+    end_round_btn.on_click = end_round
 
     build_ui()

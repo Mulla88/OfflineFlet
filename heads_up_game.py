@@ -101,7 +101,8 @@ def heads_up_game(page: ft.Page, go_home):
         elif state["page"] == "handoff":
             player = state["players"][state["current_index"]]
             view.controls.append(ft.Text(f"📱 أعط الجوال إلى: {player}", size=26, weight="bold"))
-            view.controls.append(ft.ElevatedButton("التالي", on_click=lambda e: start_round()))
+            view.controls.append(ft.Text("↪️ تأكد من وضع الجوال بشكل أفقي على الرأس قبل البدء", size=20, color="orange"))
+            view.controls.append(ft.ElevatedButton("ابدأ الجولة", on_click=lambda e: start_round()))
 
         elif state["page"] == "playing":
             view.horizontal_alignment = "stretch"
@@ -109,11 +110,15 @@ def heads_up_game(page: ft.Page, go_home):
             view.controls += [
                 timer_text,
                 word_text,
-                ft.Row([
-                    ft.ElevatedButton("✅ صحيح", on_click=handle_correct, height=60, width=150, style=ft.ButtonStyle(bgcolor=ft.colors.GREEN)),
-                    ft.ElevatedButton("⏭ تخطي", on_click=next_word, height=60, width=150, style=ft.ButtonStyle(bgcolor=ft.colors.ORANGE)),
+                ft.Column([
+                    ft.Row([
+                        ft.ElevatedButton("✅ صحيح", on_click=handle_correct, visible=True),
+                        ft.ElevatedButton("⏭ تخطي", on_click=next_word, visible=True)
+                    ], alignment="center"),
+                    ft.Row([
+                        ft.ElevatedButton("⏹ إنهاء الجولة", on_click=end_round, visible=True)
+                    ], alignment="center")
                 ], alignment="center"),
-                ft.ElevatedButton("⏹ إنهاء الجولة", on_click=end_round, height=40, width=120, style=ft.ButtonStyle(bgcolor=ft.colors.GREY)),
                 score_text,
             ]
 
