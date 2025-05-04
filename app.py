@@ -1,10 +1,5 @@
 import flet as ft
-import os
 
-# ✅ Add this line to tell Flet where to serve the manifest and icons from
-os.environ["FLET_STATIC_DIR"] = "assets"
-
-# Lazy imports to improve load time
 def load_taboo(page, go_home):
     from taboo_game import taboo_game
     taboo_game(page, go_home)
@@ -83,4 +78,5 @@ def main(page: ft.Page):
     page.on_view_pop = view_pop
     page.go(page.route)
 
-ft.app(target=main, port=int(os.environ.get("PORT", 8550)))
+# ✅ This is the key line: serve manifest.json and icons from ./assets
+ft.app(target=main, assets_dir="assets", port=int(os.environ.get("PORT", 8550)))
