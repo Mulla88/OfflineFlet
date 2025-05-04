@@ -138,19 +138,41 @@ def bara_alsalfa_game(page: ft.Page, go_home):
                     view.controls.append(ft.ElevatedButton(candidate, on_click=lambda e, c=candidate: cast_vote(voter, c)))
 
         elif state["page"] == "voting_results":
-            view.controls.append(ft.Text("📊 نتائج التصويت:", size=24, weight="bold"))
-            table_rows = [
-                ft.Row([ft.Text("👤 اللاعب", weight="bold"), ft.Text("📥 صوّت ضد", weight="bold")])
-            ]
-            for voter, vote in state["votes"].items():
-                table_rows.append(ft.Row([ft.Text(voter), ft.Text(vote)]))
-            view.controls.append(ft.Column(table_rows))
+            view.controls.append(ft.Text("نتائج التصويت", size=24, weight="bold"))
+
+            # Voting result table
+            table = ft.DataTable(
+                columns=[
+                    ft.DataColumn(ft.Text("صوّت ضد", text_align="right")),
+                    ft.DataColumn(ft.Text("اللاعب", text_align="right")),
+                ],
+                rows=[
+                    ft.DataRow(
+                        cells=[
+                            ft.DataCell(ft.Text(vote, text_align="right")),
+                            ft.DataCell(ft.Text(voter, text_align="right")),
+                        ]
+                    )
+                    for voter, vote in state["votes"].items()
+                ]
+            )
+
+            view.controls.append(table)
+
+            view.controls.append(ft.Divider(height=10))
             view.controls.append(ft.Text(f"🎭 برة السالفة كان: {state['bara_player']}", size=20, color="red"))
-            for player, voted in state["votes"].items():
-                if voted == state["bara_player"]:
+
+            correct_voters = [player for player, voted in state["votes"].items() if voted == state["bara_player"]]
+            if correct_voters:
+                view.controls.append(ft.Text(":حصلوا على 5 نقاط", size=18))
+                for player in correct_voters:
                     state["round_scores"][player] += 5
-                    view.controls.append(ft.Text(f"✅ {player} حصل على 5 نقاط"))
+                    view.controls.append(ft.Text(f"- {player}", size=16))
+            else:
+                view.controls.append(ft.Text("❌ لم يخمن أحد بشكل صحيح", size=16))
+
             view.controls.append(ft.ElevatedButton("تخمين الكلمة السرية", on_click=lambda e: prepare_guess_phase()))
+
 
         elif state["page"] == "guess_word":
             view.controls.append(ft.Text(f"🎯 {state['bara_player']}, خمن الكلمة السرية", size=22))
