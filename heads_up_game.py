@@ -22,6 +22,10 @@ def heads_up_game(page: ft.Page, go_home):
     timer_text = ft.Text(size=30, color="red", weight="bold")
     score_text = ft.Text(size=24, color="green")
 
+    def cleanup_and_go_home(e=None):
+        state["stop_timer_event"].set()
+        go_home(e)
+
     def update_num_players(delta):
         state["num_players"] = max(2, min(10, state["num_players"] + delta))
         update_ui()
@@ -79,7 +83,7 @@ def heads_up_game(page: ft.Page, go_home):
             view.controls.append(ft.Text("بعد أن يلعب الجميع، تُعرض النقاط ويُعلن الفائز.", size=18))
             view.controls.append(ft.Row([
                 ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: set_page("select_players")),
-                ft.ElevatedButton("🔙 العودة للقائمة", on_click=go_home)
+                ft.ElevatedButton("🏠 العودة للقائمة", on_click=cleanup_and_go_home)
             ], alignment="center"))
 
         elif state["page"] == "select_players":
@@ -136,10 +140,10 @@ def heads_up_game(page: ft.Page, go_home):
                 view.controls.append(ft.Text(f"{name}: {score} نقطة", size=20))
             view.controls.append(ft.Row([
                 ft.ElevatedButton("🔁 العب مرة أخرى", on_click=lambda e: restart_game()),
-                ft.ElevatedButton("🏠 القائمة الرئيسية", on_click=go_home)
+                ft.ElevatedButton("🏠 القائمة الرئيسية", on_click=cleanup_and_go_home)
             ], alignment="center"))
 
-        view.controls.append(ft.ElevatedButton("🔙 رجوع", on_click=go_home))
+        view.controls.append(ft.ElevatedButton("🔙 رجوع", on_click=cleanup_and_go_home))
         page.update()
 
     def get_new_word():

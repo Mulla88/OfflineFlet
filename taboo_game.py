@@ -4,8 +4,16 @@ import threading
 import time
 from taboo_words import WORD_BANK
 
+# 👇 Global state and cleanup hook
+state = {}
+def destroy_taboo_game():
+    if "stop_timer_event" in state and isinstance(state["stop_timer_event"], threading.Event):
+        state["stop_timer_event"].set()
+    state.clear()
+
 def taboo_game(page: ft.Page, go_home):
-    state = {
+    destroy_taboo_game()  # 💡 Always start clean
+    state.update({
         "teams": [],
         "scores": {},
         "current_team_index": 0,
@@ -17,7 +25,7 @@ def taboo_game(page: ft.Page, go_home):
         "round": 1,
         "step": "rules",
         "stop_timer_event": threading.Event()
-    }
+    })
 
     team_name_fields = []
     word_display = ft.Column(visible=False)
@@ -81,6 +89,7 @@ def taboo_game(page: ft.Page, go_home):
         page.views[-1].controls.clear()
         page.views[-1].controls.append(summary)
         page.views[-1].controls.append(ft.ElevatedButton("▶ الفريق التالي", on_click=next_team))
+        page.views[-1].controls.append(ft.ElevatedButton("🏠 العودة للرئيسية", on_click=lambda e: safe_go_home()))
         page.update()
 
     def start_timer():
@@ -106,7 +115,7 @@ def taboo_game(page: ft.Page, go_home):
             page.views[-1].controls.append(ft.Text("🏁 انتهت اللعبة! النتائج النهائية:", size=24, weight="bold"))
             update_score_display()
             page.views[-1].controls.append(score_display)
-            page.views[-1].controls.append(ft.ElevatedButton("🏠 العودة للرئيسية", on_click=go_home))
+            page.views[-1].controls.append(ft.ElevatedButton("🏠 العودة للرئيسية", on_click=lambda e: safe_go_home()))
             page.views[-1].controls.append(ft.ElevatedButton("🔄 العب مرة أخرى", on_click=reset_game))
             page.update()
             return
@@ -115,11 +124,8 @@ def taboo_game(page: ft.Page, go_home):
         view.controls.clear()
         current_team = state["teams"][state["current_team_index"]]
 
-        if state["round"] == 3:
-            last_round_warning.value = "⚠️ هذا هو الدور الأخير!"
-            last_round_warning.visible = True
-        else:
-            last_round_warning.visible = False
+        last_round_warning.visible = (state["round"] == 3)
+        last_round_warning.value = "⚠️ هذا هو الدور الأخير!" if last_round_warning.visible else ""
 
         state["current_word"] = get_new_word()
         update_word_display()
@@ -142,7 +148,7 @@ def taboo_game(page: ft.Page, go_home):
             ], alignment="center"),
             ft.Text("📊 النقاط:", size=20),
             score_display,
-            ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=go_home)
+            ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=lambda e: safe_go_home())
         ]
         page.update()
         start_timer()
@@ -178,20 +184,12 @@ def taboo_game(page: ft.Page, go_home):
         start_round()
 
     def reset_game(e):
-        state.update({
-            "teams": [],
-            "scores": {},
-            "current_team_index": 0,
-            "used_words": [],
-            "word_log": [],
-            "current_word": None,
-            "team_inputs": [],
-            "game_started": False,
-            "round": 1,
-            "step": "rules",
-            "stop_timer_event": threading.Event()
-        })
-        build_ui()
+        destroy_taboo_game()
+        taboo_game(page, go_home)
+
+    def safe_go_home():
+        destroy_taboo_game()
+        go_home()
 
     def build_ui():
         page.views.clear()
@@ -212,7 +210,7 @@ def taboo_game(page: ft.Page, go_home):
                 ft.Text("اللعبة تتكون من 3 جولات لكل فريق. الفريق ذو أعلى نقاط يفوز.", size=18),
                 ft.Row([
                     ft.ElevatedButton("🚀 ابدأ", on_click=lambda e: begin_input()),
-                    ft.ElevatedButton("🔙 العودة", on_click=go_home)
+                    ft.ElevatedButton("🔙 العودة", on_click=lambda e: safe_go_home())
                 ], alignment="center")
             ]
         else:
@@ -225,7 +223,7 @@ def taboo_game(page: ft.Page, go_home):
                     team_name_fields.append(tf)
                     view.controls.append(tf)
                 view.controls.append(ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=start_game))
-                view.controls.append(ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=go_home))
+                view.controls.append(ft.ElevatedButton("🔙 الرجوع للرئيسية", on_click=lambda e: safe_go_home()))
 
         page.update()
 
