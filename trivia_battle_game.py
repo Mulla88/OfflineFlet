@@ -20,21 +20,31 @@ def load_questions(module_path):
 def trivia_battle_game(page: ft.Page, go_home):
     page.scroll = True
 
-    state = {
-        "step": "rules",  # <-- default start with rules screen
-        "team_count": 2,
-        "team_inputs": [],
-        "teams": [],
-        "scores": {},
-        "selected_category": None,
-        "question_pool": [],
-        "question_order": [],
-        "question_index": 0,
-        "current_team_index": 0,
-        "has_answered": False,
-        "last_answer_correct": None,
-        "last_correct_answer": None,
-    }
+    state = {}
+
+    def reset_state():
+        state.clear()
+        state.update({
+            "step": "rules",
+            "team_count": 2,
+            "team_inputs": [],
+            "teams": [],
+            "scores": {},
+            "selected_category": None,
+            "question_pool": [],
+            "question_order": [],
+            "question_index": 0,
+            "current_team_index": 0,
+            "has_answered": False,
+            "last_answer_correct": None,
+            "last_correct_answer": None,
+        })
+
+    def safe_go_home(e=None):
+        page.on_resized = None  # Cleanup resize handler
+        reset_state()
+        page.views.clear()
+        go_home(e)
 
     def update_ui():
         page.views.clear()
@@ -42,38 +52,41 @@ def trivia_battle_game(page: ft.Page, go_home):
         page.views.append(view)
 
         if state["step"] == "rules":
-            view.controls.append(ft.Text("📜 قوانين لعبة تريفيا باتل", size=28, weight="bold"))
-            view.controls.append(ft.Text("👥 عدد الفرق: من 2 إلى 6", size=20))
-            view.controls.append(ft.Text("🎯 فكرة اللعبة:", size=22, weight="bold"))
-            view.controls.append(ft.Text("مسابقة معلومات بين فرق متعددة. كل فريق يتناوب بالإجابة على الأسئلة.", size=18))
-            view.controls.append(ft.Text("🕹 كيفية اللعب:", size=22, weight="bold"))
-            view.controls.append(ft.Text("كل فريق يجيب على 10 أسئلة. كل إجابة صحيحة تُحسب بنقطة واحدة.", size=18))
-            view.controls.append(ft.Text("🏁 النتيجة:", size=22, weight="bold"))
-            view.controls.append(ft.Text("الفريق الذي يجمع أكبر عدد من النقاط هو الفائز.", size=18))
-            view.controls.append(ft.Row([
-                ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: go_to_team_count()),
-                ft.ElevatedButton("🔙 العودة للقائمة", on_click=go_home)
-            ], alignment="center"))
+            view.controls += [
+                ft.Text("📜 قوانين لعبة تريفيا باتل", size=28, weight="bold"),
+                ft.Text("👥 عدد الفرق: من 2 إلى 6", size=20),
+                ft.Text("🎯 فكرة اللعبة:", size=22, weight="bold"),
+                ft.Text("مسابقة معلومات بين فرق متعددة. كل فريق يتناوب بالإجابة على الأسئلة.", size=18),
+                ft.Text("🕹 كيفية اللعب:", size=22, weight="bold"),
+                ft.Text("كل فريق يجيب على 10 أسئلة. كل إجابة صحيحة تُحسب بنقطة واحدة.", size=18),
+                ft.Text("🏁 النتيجة:", size=22, weight="bold"),
+                ft.Text("الفريق الذي يجمع أكبر عدد من النقاط هو الفائز.", size=18),
+                ft.Row([
+                    ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: go_to_team_count()),
+                    ft.ElevatedButton("🔙 العودة للقائمة", on_click=safe_go_home)
+                ], alignment="center")
+            ]
 
         elif state["step"] == "choose_team_count":
-            view.controls.append(ft.Text("👥 كم عدد الفرق؟", size=24))
-            view.controls.append(
+            view.controls += [
+                ft.Text("👥 كم عدد الفرق؟", size=24),
                 ft.Row([
                     ft.IconButton(icon=ft.Icons.REMOVE, on_click=lambda e: change_team_count(-1)),
                     ft.Text(str(state["team_count"]), size=26),
                     ft.IconButton(icon=ft.Icons.ADD, on_click=lambda e: change_team_count(1)),
-                ])
-            )
-            view.controls.append(ft.ElevatedButton("التالي", on_click=lambda e: go_to_team_names()))
-            view.controls.append(ft.ElevatedButton("🔙 رجوع للقائمة الرئيسية", on_click=go_home))
+                ], alignment="center"),
+                ft.ElevatedButton("التالي", on_click=lambda e: go_to_team_names()),
+                ft.ElevatedButton("🔙 رجوع", on_click=safe_go_home)
+            ]
 
         elif state["step"] == "enter_team_names":
             view.controls.append(ft.Text("✏️ أدخل أسماء الفرق:", size=24))
             for tf in state["team_inputs"]:
                 view.controls.append(tf)
-
-            view.controls.append(ft.ElevatedButton("التالي", on_click=lambda e: save_teams()))
-            view.controls.append(ft.ElevatedButton("🔙 رجوع", on_click=lambda e: go_to_team_count()))
+            view.controls += [
+                ft.ElevatedButton("التالي", on_click=lambda e: save_teams()),
+                ft.ElevatedButton("🔙 رجوع", on_click=lambda e: go_to_team_count())
+            ]
 
         elif state["step"] == "choose_category":
             view.controls.append(ft.Text("🧠 اختر فئة الأسئلة", size=24))
@@ -91,9 +104,11 @@ def trivia_battle_game(page: ft.Page, go_home):
                     state["step"] = "question"
                     update_ui()
 
-            view.controls.append(dd)
-            view.controls.append(ft.ElevatedButton("بدء اللعبة", on_click=confirm_category))
-            view.controls.append(ft.ElevatedButton("🔙 رجوع", on_click=lambda e: go_to_team_names()))
+            view.controls += [
+                dd,
+                ft.ElevatedButton("بدء اللعبة", on_click=confirm_category),
+                ft.ElevatedButton("🔙 رجوع", on_click=lambda e: go_to_team_names())
+            ]
 
         elif state["step"] == "question":
             if state["question_index"] < len(state["question_order"]):
@@ -101,7 +116,7 @@ def trivia_battle_game(page: ft.Page, go_home):
                 qid = state["question_order"][state["question_index"]]
                 question = state["question_pool"][qid]
 
-                view.controls.append(ft.Text(f"❓ السؤال {state['question_index']+1} - الفريق: {team}", size=22))
+                view.controls.append(ft.Text(f"❓ السؤال {state['question_index'] + 1} - الفريق: {team}", size=22))
                 view.controls.append(ft.Text(question["question"], size=20))
 
                 if not state["has_answered"]:
@@ -130,7 +145,7 @@ def trivia_battle_game(page: ft.Page, go_home):
 
                     view.controls.append(ft.ElevatedButton("السؤال التالي", on_click=lambda e: next_question()))
 
-                view.controls.append(ft.ElevatedButton("🔙 رجوع للقائمة الرئيسية", on_click=go_home))
+                view.controls.append(ft.ElevatedButton("🏠 الرجوع للقائمة", on_click=safe_go_home))
 
             else:
                 state["step"] = "results"
@@ -139,13 +154,14 @@ def trivia_battle_game(page: ft.Page, go_home):
         elif state["step"] == "results":
             view.controls.append(ft.Text("🎉 انتهت اللعبة!", size=24))
             view.controls.append(ft.Text("🏆 النتائج النهائية:", size=22))
-            for t in state["teams"]:
-                view.controls.append(ft.Text(f"- {t}: {state['scores'][t]} نقطة"))
+            sorted_scores = sorted(state["scores"].items(), key=lambda x: x[1], reverse=True)
+            for t, s in sorted_scores:
+                view.controls.append(ft.Text(f"- {t}: {s} نقطة"))
 
-            view.controls.append(ft.Row([
+            view.controls += [
                 ft.ElevatedButton("🔁 العب مرة أخرى", on_click=lambda e: restart_game()),
-                ft.ElevatedButton("🏠 العودة للقائمة الرئيسية", on_click=go_home)
-            ], alignment="center"))
+                ft.ElevatedButton("🏠 العودة للقائمة", on_click=safe_go_home)
+            ]
 
         page.update()
 
@@ -182,23 +198,9 @@ def trivia_battle_game(page: ft.Page, go_home):
         update_ui()
 
     def restart_game():
-        state.clear()
-        state.update({
-            "step": "rules",
-            "team_count": 2,
-            "team_inputs": [],
-            "teams": [],
-            "scores": {},
-            "selected_category": None,
-            "question_pool": [],
-            "question_order": [],
-            "question_index": 0,
-            "current_team_index": 0,
-            "has_answered": False,
-            "last_answer_correct": None,
-            "last_correct_answer": None,
-        })
+        reset_state()
         update_ui()
 
+    reset_state()
     update_ui()
-    page.on_resized = lambda e: update_ui()
+    page.on_resized = lambda e: update_ui()  # Only active while inside the game
