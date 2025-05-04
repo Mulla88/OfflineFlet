@@ -1,4 +1,5 @@
 import flet as ft
+import os
 
 def load_taboo(page, go_home):
     from taboo_game import taboo_game
