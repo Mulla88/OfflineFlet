@@ -2,7 +2,7 @@ import flet as ft
 import os
 
 # ✅ Add this line to tell Flet where to serve the manifest and icons from
-os.environ["FLET_STATIC_DIR"] = "static"
+os.environ["FLET_STATIC_DIR"] = "assets"
 
 # Lazy imports to improve load time
 def load_taboo(page, go_home):
