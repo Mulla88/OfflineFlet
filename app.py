@@ -21,6 +21,11 @@ def load_heads_up(page, go_home):
     from heads_up_game import heads_up_game
     heads_up_game(page, go_home)
 
+def load_min_fina(page, go_home):
+    from min_fina_game import min_fina_game
+    min_fina_game(page, go_home)
+
+
 def main(page: ft.Page):
     page.title = "🎉 ألعابنا"
     page.scroll = True
@@ -41,6 +46,7 @@ def main(page: ft.Page):
                 ft.ElevatedButton("مافيا", on_click=lambda _: page.go("/mafia")),
                 ft.ElevatedButton("تابو 🕒", on_click=lambda _: page.go("/taboo")),
                 ft.ElevatedButton("📱 الجوال على الرأس", on_click=lambda _: page.go("/heads_up")),
+                ft.ElevatedButton("من فينا؟ 👀", on_click=lambda _: page.go("/min_fina")),
             ],
             vertical_alignment="center",
             horizontal_alignment="center",
@@ -67,6 +73,10 @@ def main(page: ft.Page):
         elif route == "/heads_up":
             page.views.append(ft.View(route="/heads_up", controls=[]))
             load_heads_up(page, go_home)
+        elif route == "/min_fina":
+            page.views.append(ft.View(route="/min_fina", controls=[]))
+            load_min_fina(page, go_home)
+
 
         page.update()
 
