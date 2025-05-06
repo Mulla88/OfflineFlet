@@ -13,7 +13,7 @@ def bara_alsalfa_game(page: ft.Page, go_home):
     page.on_resized = None
 
     state.update({
-        "page": "home",
+        "page": "rules",
         "num_players": 3,
         "player_names": [],
         "selected_category": None,
@@ -114,6 +114,23 @@ def bara_alsalfa_game(page: ft.Page, go_home):
                     ft.ElevatedButton("تغيير الكلمة", on_click=lambda e: assign_roles_and_word(), style=ft.ButtonStyle(bgcolor=Colors.RED, color=Colors.WHITE))
                 ], alignment="center")
             )
+
+        elif state["page"] == "rules":
+            view.controls += [
+                ft.Text("📜 قوانين لعبة برا السالفة", size=28, weight="bold"),
+                ft.Text("👥 عدد اللاعبين: من 3 إلى 15", size=20),
+                ft.Text("🎯 فكرة اللعبة:", size=22, weight="bold"),
+                ft.Text("أحد اللاعبين لا يعرف الكلمة (برة السالفة)، بينما البقية يعرفونها.", size=18),
+                ft.Text("🕹 كيفية اللعب:", size=22, weight="bold"),
+                ft.Text("اللاعبون يتبادلون الأسئلة لمحاولة كشف من هو برة السالفة، ثم يصوتون عليه.", size=18),
+                ft.Text("بعد التصويت، يحاول اللاعب المشتبه به تخمين الكلمة السرية.", size=18),
+                ft.Text("🏁 النتيجة:", size=22, weight="bold"),
+                ft.Text("نقاط تُمنح لمن يخمن برة السالفة بشكل صحيح، و10 نقاط إذا خمن برة السالفة الكلمة.", size=18),
+                ft.Row([
+                    ft.ElevatedButton("🚀 ابدأ اللعبة", on_click=lambda e: go_to_home()),
+                ], alignment="center")
+            ]
+
 
         elif state["page"] == "question_or_vote":
             view.controls.append(ft.Text("ماذا تريد أن تفعل الآن؟", size=24))
@@ -246,6 +263,11 @@ def bara_alsalfa_game(page: ft.Page, go_home):
         state["votes"] = {}
         state["page"] = "voting"
         update_ui()
+
+    def go_to_home():
+        state["page"] = "home"
+        update_ui()
+
 
     def cast_vote(voter, voted_for):
         state["votes"][voter] = voted_for
