@@ -25,6 +25,9 @@ def load_min_fina(page, go_home):
     from min_fina_game import min_fina_game
     min_fina_game(page, go_home)
 
+def load_bedoon_kalam(page, go_home):
+    from bedoon_kalam_game import bedoon_kalam_game
+    bedoon_kalam_game(page, go_home)
 
 def main(page: ft.Page):
     page.title = "🎉 ألعابنا"
@@ -47,6 +50,7 @@ def main(page: ft.Page):
                 ft.ElevatedButton("تابو 🕒", on_click=lambda _: page.go("/taboo")),
                 ft.ElevatedButton("📱 الجوال على الرأس", on_click=lambda _: page.go("/heads_up")),
                 ft.ElevatedButton("من فينا؟ 👀", on_click=lambda _: page.go("/min_fina")),
+                ft.ElevatedButton("بدون كلام 🤫", on_click=lambda _: page.go("/bedoon_kalam")),
             ],
             vertical_alignment="center",
             horizontal_alignment="center",
@@ -76,6 +80,9 @@ def main(page: ft.Page):
         elif route == "/min_fina":
             page.views.append(ft.View(route="/min_fina", controls=[]))
             load_min_fina(page, go_home)
+        elif route == "/bedoon_kalam":
+            page.views.append(ft.View(route="/bedoon_kalam", controls=[]))
+            load_bedoon_kalam(page, go_home)
 
 
         page.update()
